@@ -1,34 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useState, type MouseEvent } from "react";
+import reactLogo from "./assets/react.svg";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
+interface Dots {
+	x: number;
+	y: number;
 }
 
-export default App
+function App() {
+	const [dots, setDots] = useState<Dots[]>([]);
+	const [cache, setCache] = useState<Dots[]>([]);
+
+	const draw = (e: MouseEvent) => {
+		const { clientX, clientY } = e;
+		setDots([...dots, { x: clientX, y: clientY }]);
+	};
+
+	const undo = () => {
+		if (dots.length > 0) {
+			const newDots = [...dots];
+			const lastDot = newDots.pop() as Dots;
+			Promise.all([setCache([...cache, lastDot]), setDots(newDots)]);
+		}
+	};
+
+	const redo = () => {
+		if (cache.length > 0) {
+			const newCache = [...cache];
+			const lastCacheItem = newCache.pop() as Dots;
+			Promise.all([setDots([...dots, lastCacheItem]), setCache(newCache)]);
+		}
+	};
+
+	return (
+		<div className='App'>
+			<div id='button-wrapper'>
+				<button onClick={undo}>Undo</button>
+				<button onClick={redo}>Redo</button>
+			</div>
+			<div
+				id='click-area'
+				onClick={draw}
+			>
+				{dots.map(({ x, y }: Dots, i: number) => (
+					<div
+						key={`dot-${i}`}
+						style={{ left: x, top: y }}
+						className='dot'
+					></div>
+				))}
+			</div>
+		</div>
+	);
+}
+
+export default App;
